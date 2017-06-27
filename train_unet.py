@@ -9,7 +9,7 @@ from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras import backend as K
 import settings
 
-working_path = settings.BASE_DIR + 'tutorial_out/'
+working_path = settings.BASE_DIR + 'tutorial_out/masks/'
 
 K.set_image_dim_ordering('th')  # Theano dimension ordering in this code
 
@@ -85,11 +85,14 @@ def train_and_predict(use_existing):
     print('-'*30)
     print('Loading and preprocessing train data...')
     print('-'*30)
-    imgs_train = np.load(working_path+"trainImages.npy").astype(np.float32)
-    imgs_mask_train = np.load(working_path+"trainMasks.npy").astype(np.float32)
+    imgs_train = np.load(working_path+"train_final_images.npy").astype(np.float32)
+    imgs_mask_train = np.load(working_path+"train_final_masks.npy").astype(np.float32)
 
-    imgs_test = np.load(working_path+"testImages.npy").astype(np.float32)
-    imgs_mask_test_true = np.load(working_path+"testMasks.npy").astype(np.float32)
+    imgs_val = np.load(working_path+"val_final_images.npy").astype(np.float32)
+    imgs_mask_val = np.load(working_path+"val_final_masks.npy").astype(np.float32)
+
+    #imgs_test = np.load(working_path+"testImages.npy").astype(np.float32)
+    #imgs_mask_test_true = np.load(working_path+"testMasks.npy").astype(np.float32)
     
     mean = np.mean(imgs_train)  # mean for data centering
     std = np.std(imgs_train)  # std for data normalization
@@ -120,15 +123,15 @@ def train_and_predict(use_existing):
     print('-'*30)
     print('Fitting model...')
     print('-'*30)
-    model.fit(imgs_train, imgs_mask_train, batch_size=2, nb_epoch=20, verbose=1, shuffle=True,
-              callbacks=[model_checkpoint])
+    model.fit(imgs_train, imgs_mask_train, batch_size=8, epochs=100, verbose=1, shuffle=True,
+                validation_data=(imgs_val, imgs_mask_val), callbacks=[model_checkpoint])
 
     # loading best weights from training session
     print('-'*30)
     print('Loading saved weights...')
     print('-'*30)
     model.load_weights('./unet.hdf5')
-
+'''
     print('-'*30)
     print('Predicting masks on test data...')
     print('-'*30)
@@ -142,6 +145,6 @@ def train_and_predict(use_existing):
         mean+=dice_coef_np(imgs_mask_test_true[i,0], imgs_mask_test[i,0])
     mean/=num_test
     print("Mean Dice Coeff : ",mean)
-
+'''
 if __name__ == '__main__':
     train_and_predict(False)
