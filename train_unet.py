@@ -76,10 +76,16 @@ def get_unet():
 
     model = Model(input=inputs, output=conv10)
 
-    model.compile(optimizer=Adam(lr=1.0e-5), loss=dice_coef_loss, metrics=[dice_coef])
+    model.compile(optimizer=Adam(lr=0.001), loss=dice_coef_loss, metrics=[dice_coef])
 
     return model
-
+    
+def scheduler(epoch):
+    if epoch < 10:
+        return 0.001
+    if epoch < 20:
+        return 0.0001
+    return 1e-5
 
 def train_and_predict(use_existing):
     print('-'*30)
@@ -118,13 +124,17 @@ def train_and_predict(use_existing):
     # For a home GPU computation benchmark, on my home set up with a GTX970 
     # I was able to run 20 epochs with a training set size of 320 and 
     # batch size of 2 in about an hour. I started getting reseasonable masks 
-    # after about 3 hours of training. 
+    # after about 3 hours of training.  
+
+
+    lr_decay = LearningRateScheduler(scheduler)
+
     #
     print('-'*30)
     print('Fitting model...')
     print('-'*30)
     model.fit(imgs_train, imgs_mask_train, batch_size=8, epochs=100, verbose=1, shuffle=True,
-                validation_data=(imgs_val, imgs_mask_val), callbacks=[model_checkpoint])
+                validation_data=(imgs_val, imgs_mask_val), callbacks=[model_checkpoint, lr_decay])
 
     # loading best weights from training session
     print('-'*30)
